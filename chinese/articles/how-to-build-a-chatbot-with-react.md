@@ -1,28 +1,37 @@
 > * 原文地址：[How to Build a Chatbot with React React 项目实践——创建一个聊天机器人](https://www.freecodecamp.org/news/how-to-build-a-chatbot-with-react/)
 > * 原文作者：Fredrik Strand Oseberg
-> * 译者：
+> * 译者：Humilitas
 > * 校对者：
 
 ![How to Build a Chatbot with React](https://www.freecodecamp.org/news/content/images/size/w2000/2020/07/wooden-robot-6069-1.jpg)
 
 My philosophy is simple. To become good at something, you need to do it a lot.
+我的哲学很简单：熟能生巧。
 
 It's not enough to do it once. You need to do it again, and again and again. It will never end. I used the same philosophy to get good at programming.
+浅尝辄止是不够的，需要不断重复才能掌握一项技能。我自己就是以这种方式做到熟练掌握编程技能的。
 
 One thing I've noticed on this journey is that it's a lot more fun to build things that are interesting, and that look good. Things you can show you friends and be proud of. Something that makes you excited to get started when you sit down in front of your keyboard.
+在学习过程中，我发现动手实现一些有趣的、好看的东西的过程非常有意思。向朋友们展示自己的得意作品是令人自豪的，这种感觉使得你坐在键盘面前的时候充满动力地去动手实践。
 
 That's why I built a chatbot.
+这就是我编写这个聊天机器人的动机。
 
 Which morphed into a  [npm package.][1]
+我最终将它发布成了一个 [npm 包][1]。
 
 So let's build one together. If you want to take on this challenge on your own, you can go directly to the  [documentation (which is actually a chatbot)][2]. Or, if you are a visual learner,  [I created a tutorial on YouTube.][3]
+一起动手实践吧。如果你想要自己独立完成这个挑战，可以直接查看 [文档（文档本身其实也是聊天机器人）][2] 进行。如果你更倾向于看视频进行学习，我也制作了一个 [视频教程][3]。
 
 Otherwise, let's go. I'm going to assume that you have Node installed, and access to the npx command. If not,  [go get it here.][4]
+我假设你已经安装好了 Node 环境，并且可以使用 npx 命令，否则点击 [这里][4] 先进行安装。
 
 ## Initial setup
+## 初始化设置
 
 ```
-// Run these commands from your command line
+// Run these commands from your command line 
+// 在命令行界面执行如下命令
 npx create-react-app chatbot
 cd chatbot
 yarn add react-chatbot-kit
@@ -30,58 +39,93 @@ yarn start
 ```
 
 This should install the npm package and open the development server at localhost:3000.
+这将会安装所需的 npm 包，并且以 localhost:3000 这个地址运行开发服务器。
 
 Next head over to  `App.js`  and make these changes:
+接下来打开 `App.js`，将其内容改为如下代码：
 
 ```jsx
 import Chatbot from 'react-chatbot-kit'
 
+function App() {
+  return (
+    <div className="App">
+      <header className="App-header">
+        <Chatbot />
+      </header>
+    </div>
+  );
+}
 
 ```
 
 Great job. We're getting there. You should see this in your development server now:
+干得不错，我们更进一步了。现在你应该可以在开发服务器中看到以下内容：
 
 ![](https://www.freecodecamp.org/news/content/images/2020/06/Screenshot-2020-06-10-at-16.03.51.png)
 
 The chatbot takes three props that must be included for it to work. First, it needs a config which must include an  `initialMessages`  property with chatbot message objects.
+这个聊天机器人接收三个运行必须的属性（props）。// todo
 
 Secondly, it needs a  `MessageParser`  class that must implement a parse method.
 
 Thirdly, it needs an  `ActionProvider`  class which will implement actions that we want to take based on parsing the message.
 
 We'll go deeper into this later. For now,  [go here to get the boilerplate code to get started.][5]
+稍后我们再深入这个问题，现在先 [获取模板代码][5] 来继续。
 
 -   Put the  `MessageParser`  code in a file called  `MessageParser.js`
 -   Put the  `ActionProvider`  code in a file called  `ActionProvider.js`
 -   Put the config code in a file called  `config.js`
+-   将 `MessageParser` 代码放入 `MessageParser.js` 文件中
+-   将 `ActionProvider` 代码放入 `ActionProvider.js` 文件中
+-   将配置代码放入 `config.js` 文件中
 
 When that's done, go back to your  `App.js`  file and add this code:
+完成之后，回到 `App.js` 添加如下代码：
 
 ```jsx
 import React from 'react';
 import Chatbot from 'react-chatbot-kit'
 import './App.css';
+
 import ActionProvider from './ActionProvider';
 import MessageParser from './MessageParser';
 import config from './config';
 
+function App() {
+  return (
+    <div className="App">
+      <header className="App-header">
+        <Chatbot config={config} actionProvider={ActionProvider} 	    messageParser={MessageParser} />
+      </header>
+    </div>
+  );
+}
 ```
 
 You should now see this on localhost:3000:
+现在应该能够在 localhost:3000 中看到以下内容：
 
 ![](https://www.freecodecamp.org/news/content/images/2020/06/Screenshot-2020-06-10-at-16.16.57.png)
 
 Sweet. Now we have the chatbot rendered to the screen and we can write in the input field and submit it to send a message to the chat. But when we try that, nothing happens.
+我们成功地渲染出了聊天机器人的界面，在输入框中输入一些内容并提交，应该能够在聊天中发送一条信息。然而，没有任何效果。
 
 ## Understanding how the chatbot works
+## 理解聊天机器人是如何运作的
 
 Here we need to take a pit stop and take a look at how the  `MessageParser`  and  `ActionProvider`  interacts to make our bot take action.
+这里我们先暂时停下脚步，探究一下 `MessageParser` 和 `ActionProvider` 是如何交互从而使我们的机器人运作起来的。
 
 When the bot is initialized, the  `initialMessages`  property from the config is put into the chatbot's internal state in a property called  `messages`, which is used to render messages to the screen.
+初始化之后，机器人内部 state 的 `messages` 属性值被设置为配置文件中 `initialMessages` 属性的值，并渲染到页面中。
 
 Moreover, when we write and push the submit button in the chat field, our  `MessageParser`  (which we passed as props to the chatbot) is calling its  `parse`  method. This is why this method must be implemented.
+此外，在输入消息并提交的时候，`MessageParser`（我们将它作为一个属性传入了 chatbot）将调用它的 `parse` 方法。所以一定要在 `MessageParser` 中实现 `parse` 方法。
 
 Let's take a closer look at the  `MessageParser`  starter code:
+仔细查看 `MessageParser` 的起始代码：
 
 ```jsx
 class MessageParser {
@@ -89,11 +133,19 @@ class MessageParser {
     this.actionProvider = actionProvider;
   }
 
+  parse(message) {
+    ... parse logic
+  }
+}
 ```
 
 If we look closely, this method is constructed with an  `actionProvider`. This is the same  `ActionProvider`  class that we pass as props to the chatbot. This means that we control two things - how the message is parsed, and what action to take based on said parsing.
+仔细观察可以发现，它的构造函数接收一个 `actionProvider` 参数。 
+//todo
+也就是说我们控制着两件事——如何解析用户消息、如何响应解析结果。
 
 Let's use this information to create a simple chatbot response. First alter the  `MessageParser`  like this:
+利用这些信息创建简单的响应，首先更新 `MessageParser` 为如下内容：
 
 ```
 class MessageParser {
@@ -110,8 +162,10 @@ if (lowerCaseMessage.includes("hello")) {
 ```
 
 Now our  `MessageParser`  is receiving the user message, checking if it includes the word "hello". If it does, it calls the  `greet`  method on the  `actionProvider`.
+`MessageParser` 接收用户消息并判断其中是否包含关键字 "hello"，如果包含则调用 `actionProvider` 的 `greet` 方法。
 
 Right now, this would crash, because we haven't implemented the  `greet`  method. Let's do that next. Head over to  `ActionProvider.js`:
+现在程序还不能正常运行，因为我们还没有实现 `greet` 方法。接下来我们将会着手实现。更新 `ActionProvider.js` 为如下代码：
 
 ```
 class ActionProvider {
@@ -134,10 +188,12 @@ class ActionProvider {
 ```
 
 Nice. Now if we type in "hello" into the chat field, we get this back:
+现在我们向机器人发送 "hello" 将得到如下响应：
 
 ![](https://www.freecodecamp.org/news/content/images/2020/06/Screenshot-2020-06-10-at-16.39.48.png)
 
 Fantastic. Now that we can control parsing the message and responding with an action, let's try to make something more complicated. Let's try to make a bot that provides you with learning resources for the programming language you ask for.
+目前已经实现了解析消息并作出响应，
 
 ## Creating a learning bot
 
